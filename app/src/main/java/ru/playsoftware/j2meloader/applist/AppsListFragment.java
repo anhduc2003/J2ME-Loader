@@ -115,7 +115,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private FragmentAppsListBinding binding;
 	private DividerItemDecoration itemDecoration;
 	private boolean selectionMode;
-	private CharSequence searchQuery = "";
+	private Menu menu;
 	private final OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
 		@Override
 		public void handleOnBackPressed() {
@@ -374,6 +374,9 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		selectionMode = enabled;
 		adapter.setSelectionMode(enabled);
 		backCallback.setEnabled(enabled);
+		if (menu != null) {
+			applyMenuVisibility(menu);
+		}
 		if (binding != null) {
 			if (enabled) {
 				binding.floatingActionButton.hide();
@@ -381,7 +384,6 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 				binding.floatingActionButton.show();
 			}
 		}
-		requireActivity().supportInvalidateOptionsMenu();
 	}
 
 	private void onSelectionChanged(int count) {
@@ -513,7 +515,11 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 
 	@Override
 	public void onPrepareMenu(@NonNull Menu menu) {
-		int[] browseItems = {R.id.action_search, R.id.action_view, R.id.action_sort,
+		applyMenuVisibility(menu);
+	}
+
+	private void applyMenuVisibility(Menu menu) {
+		int[] browseItems = {R.id.action_view, R.id.action_sort,
 				R.id.action_folder, R.id.action_select};
 		int[] selectionItems = {R.id.action_select_all, R.id.action_move_selected,
 				R.id.action_delete_selected, R.id.action_cancel_selection};
@@ -556,14 +562,9 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 				.map(String::toLowerCase)
 				.distinctUntilChanged()
 				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(query -> {
-					searchQuery = query;
-					adapter.getFilter().filter(query);
-				});
-		if (!selectionMode && searchQuery != null && searchQuery.length() > 0) {
-			searchItem.expandActionView();
-			searchView.setQuery(searchQuery, false);
-		}
+				.subscribe(charSequence -> adapter.getFilter().filter(charSequence));
+		this.menu = menu;
+		applyMenuVisibility(menu);
 		int type = preferences.getInt(PREF_APPS_VIEW, AppsListAdapter.LAYOUT_TYPE_GRID);
 		if (type == AppsListAdapter.LAYOUT_TYPE_LIST) {
 			menu.findItem(R.id.action_view).setIcon(R.drawable.ic_action_apps_view_grid);
