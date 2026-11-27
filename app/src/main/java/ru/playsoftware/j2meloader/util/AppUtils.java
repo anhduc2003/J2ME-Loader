@@ -119,6 +119,9 @@ public class AppUtils {
 		FileUtils.deleteDirectory(appDir);
 		File appSaveDir = new File(Config.getDataDir(), item.getPath());
 		FileUtils.deleteDirectory(appSaveDir);
+		for (int slot = 2; slot <= Config.MAX_INSTANCES; slot++) {
+			FileUtils.deleteDirectory(new File(Config.getSlotDataDir(slot), item.getPath()));
+		}
 		File appConfigsDir = new File(Config.getConfigsDir(), item.getPath());
 		FileUtils.deleteDirectory(appConfigsDir);
 	}

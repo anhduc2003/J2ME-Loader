@@ -180,6 +180,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 				layoutManager.setSpanCount(configuration.screenWidthDp / 90);
 			}
 		});
+		binding.list.setHasFixedSize(true);
+		binding.list.setItemViewCacheSize(24);
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
 		String folder = preferences.getString(PREF_APP_FOLDER, null);
@@ -237,6 +239,16 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			item.setTitle(title);
 			appRepository.update(item);
 		});
+	}
+
+	private void openInNewWindow(AppItem item) {
+		FragmentActivity activity = requireActivity();
+		int slot = Config.findFreeMidletSlot(activity);
+		if (slot < 0) {
+			Toast.makeText(activity, R.string.error_max_windows, Toast.LENGTH_SHORT).show();
+		} else {
+			Config.startAppInSlot(activity, item.getTitle(), item.getPathExt(), slot);
+		}
 	}
 
 	private void launchApp(AppItem item) {
@@ -475,6 +487,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			alertRename(appItem);
 		} else if (itemId == R.id.action_context_folder) {
 			alertMoveToFolder(appItem);
+		} else if (itemId == R.id.action_context_new_window) {
+			openInNewWindow(appItem);
 		} else if (itemId == R.id.action_context_settings) {
 			Config.startApp(requireActivity(), appItem.getTitle(), appItem.getPathExt(), true);
 		} else if (itemId == R.id.action_context_reinstall) {

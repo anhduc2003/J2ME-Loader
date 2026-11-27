@@ -55,7 +55,7 @@ public class AppClassLoader extends DexClassLoader {
 	}
 
 	public static void setDataDir(File appDir) {
-		dataDir = appDir.getParentFile().getParent() + Config.MIDLET_DATA_DIR + appDir.getName();
+		dataDir = new File(Config.getInstanceDataDir(), appDir.getName()).getAbsolutePath();
 	}
 
 	public static InputStream getResourceAsStream(Class<?> resClass, String resName) {

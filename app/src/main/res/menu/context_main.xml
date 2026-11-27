@@ -10,6 +10,9 @@
         android:id="@+id/action_context_folder"
         android:title="@string/action_context_folder" />
     <item
+        android:id="@+id/action_context_new_window"
+        android:title="@string/action_open_window" />
+    <item
         android:id="@+id/action_context_settings"
         android:title="@string/action_settings" />
     <item
