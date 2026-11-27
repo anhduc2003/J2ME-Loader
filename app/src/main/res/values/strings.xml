@@ -250,6 +250,23 @@
     <string name="pref_app_sort_folder">Folder</string>
     <string name="action_hide_vk">Hide virtual keyboard</string>
     <string name="action_open_window">Open in new window</string>
+    <string name="multi_row_title">Multi-window rows</string>
+    <string name="multi_row_menu">Multi-window rows</string>
+    <string name="multi_row_library_hint">TAP A GAME TO ADD A RUNNING ROW:</string>
+    <string name="multi_row_settings_header">ROW MODE SETTINGS</string>
+    <string name="multi_row_enable">Run games in fixed rows</string>
+    <string name="multi_row_limit">Rows:</string>
+    <string name="multi_row_row_label">Row %1$d</string>
+    <string name="multi_row_title_row">%1$s (Row %2$s)</string>
+    <string name="multi_row_limited">Keep at most %1$d rows for stability</string>
+    <string name="multi_row_no_games">No games installed</string>
+    <string name="action_zoom_window">Maximize</string>
+    <string name="game_icon">Game icon</string>
+    <string name="key_up">\u25B2</string>
+    <string name="key_down">\u25BC</string>
+    <string name="key_left">\u25C0</string>
+    <string name="key_right">\u25B6</string>
+
     <string name="action_float_window">Float this game</string>
     <string name="pref_float_windows_title">Floating game windows</string>
     <string name="pref_float_windows_summary">Open a game in a small floating window over the library; use the system expand button for full screen</string>

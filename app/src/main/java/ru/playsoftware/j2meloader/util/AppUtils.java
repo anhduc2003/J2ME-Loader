@@ -84,6 +84,17 @@ public class AppUtils {
 		return item;
 	}
 
+	public static List<AppItem> loadInstalledApps() {
+		File appsDir = new File(Config.getAppDir());
+		String[] names = appsDir.list();
+		if (names == null) {
+			return new ArrayList<>();
+		}
+		List<String> folders = new ArrayList<>(Arrays.asList(names));
+		folders.remove(".tmp");
+		return getAppsList(folders);
+	}
+
 	public static AppItem findApp(String name, String vendor, String uid) throws IOException {
 		File appsDir = new File(Config.getAppDir());
 		for (String appFolderName : appsDir.list()) {

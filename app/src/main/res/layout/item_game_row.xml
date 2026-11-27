@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="220dp"
+    android:orientation="horizontal"
+    android:background="#1E222B"
+    android:padding="6dp"
+    android:layout_marginBottom="8dp"
+    android:elevation="3dp">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1.4"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:id="@+id/imgGameIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@string/game_icon"
+                android:src="@mipmap/ic_launcher" />
+
+            <TextView
+                android:id="@+id/txtGameTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1"
+                tools:text="AvatarQ 250 (Hàng 1)" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/gameViewContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#000000" />
+    </LinearLayout>
+
+    <GridLayout
+        android:layout_width="0dp"
+        android:layout_weight="1.2"
+        android:layout_height="match_parent"
+        android:columnCount="4"
+        android:rowCount="4"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:alignmentMode="alignBounds">
+
+        <Button style="@style/MiniKey" android:text="@string/key_up" android:id="@+id/btnUp" />
+        <Button style="@style/MiniKey" android:text="1" android:id="@+id/btn1" />
+        <Button style="@style/MiniKey" android:text="2" android:id="@+id/btn2" />
+        <Button style="@style/MiniKey" android:text="3" android:id="@+id/btn3" />
+
+        <Button style="@style/MiniKey" android:text="@string/key_left" android:id="@+id/btnLeft" />
+        <Button style="@style/MiniKey" android:text="@string/key_right" android:id="@+id/btnRight" />
+        <Button style="@style/MiniKey" android:text="OK" android:id="@+id/btnOk" />
+        <Button style="@style/MiniKey" android:text="4" android:id="@+id/btn4" />
+
+        <Button style="@style/MiniKey" android:text="@string/key_down" android:id="@+id/btnDown" />
+        <Button style="@style/MiniKey" android:text="5" android:id="@+id/btn5" />
+        <Button style="@style/MiniKey" android:text="6" android:id="@+id/btn6" />
+        <Button style="@style/MiniKey" android:text="7" android:id="@+id/btn7" />
+
+        <Button style="@style/MiniKey" android:text="*" android:id="@+id/btnStar" />
+        <Button style="@style/MiniKey" android:text="0" android:id="@+id/btn0" />
+        <Button style="@style/MiniKey" android:text="#" android:id="@+id/btnHash" />
+        <Button style="@style/MiniKey" android:text="C" android:id="@+id/btnClear" />
+    </GridLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingStart="4dp">
+
+        <ImageButton
+            android:id="@+id/btnZoom"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/action_zoom_window"
+            android:src="@drawable/ic_zoom_out_map" />
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/action_settings"
+            android:src="@drawable/ic_settings" />
+
+        <ImageButton
+            android:id="@+id/btnClose"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginTop="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/close"
+            android:src="@drawable/ic_close" />
+    </LinearLayout>
+</LinearLayout>

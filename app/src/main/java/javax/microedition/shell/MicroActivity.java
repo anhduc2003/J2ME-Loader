@@ -23,12 +23,16 @@ import static ru.playsoftware.j2meloader.util.Constants.*;
 
 import android.annotation.SuppressLint;
 import android.app.PictureInPictureParams;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -77,7 +81,9 @@ import org.acra.ACRA;
 import org.acra.ErrorReporter;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -94,8 +100,10 @@ import javax.microedition.util.ContextHolder;
 
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import ru.playsoftware.j2meloader.BuildConfig;
 import ru.playsoftware.j2meloader.R;
+import ru.playsoftware.j2meloader.util.InstanceCommands;
 import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ActivityMicroBinding;
 import ru.playsoftware.j2meloader.util.Constants;
@@ -123,6 +131,25 @@ public class MicroActivity extends AppCompatActivity {
 	private int menuKey;
 	private String appPath;
 	private boolean floatWindows;
+
+	private final BroadcastReceiver commandReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getIntExtra(InstanceCommands.EXTRA_SLOT, 1) != Config.getInstanceSlot()) {
+				return;
+			}
+			String command = intent.getStringExtra(InstanceCommands.EXTRA_COMMAND);
+			if (InstanceCommands.COMMAND_KEY.equals(command)) {
+				int code = intent.getIntExtra(InstanceCommands.EXTRA_KEY_CODE, KeyEvent.KEYCODE_UNKNOWN);
+				int action = intent.getIntExtra(InstanceCommands.EXTRA_KEY_ACTION, KeyEvent.ACTION_DOWN);
+				dispatchKeyEvent(new KeyEvent(action, code));
+			} else if (InstanceCommands.COMMAND_CLOSE.equals(command)) {
+				finishAndRemoveTask();
+			} else if (InstanceCommands.COMMAND_CAPTURE.equals(command)) {
+				captureThumbnail(intent.getStringExtra(InstanceCommands.EXTRA_PATH));
+			}
+		}
+	};
 
 	public ActivityMicroBinding binding;
 
@@ -224,6 +251,8 @@ public class MicroActivity extends AppCompatActivity {
 			e.printStackTrace();
 			showErrorDialog(e.toString());
 		}
+		ContextCompat.registerReceiver(this, commandReceiver,
+				new IntentFilter(InstanceCommands.ACTION), ContextCompat.RECEIVER_NOT_EXPORTED);
 		if (savedInstanceState == null && floatWindows) {
 			binding.getRoot().postDelayed(this::enterFloatingWindow, 300);
 		}
@@ -669,6 +698,38 @@ public class MicroActivity extends AppCompatActivity {
 		return new Rational(width, height);
 	}
 
+	private void captureThumbnail(String path) {
+		if (path == null || !(current instanceof Canvas)) {
+			return;
+		}
+		((Canvas) current).getScreenShot()
+				.subscribeOn(Schedulers.computation())
+				.observeOn(Schedulers.io())
+				.subscribe(bitmap -> writeThumbnail(bitmap, path),
+						e -> Log.w("MicroActivity", "Can't capture a thumbnail", e));
+	}
+
+	private void writeThumbnail(Bitmap source, String path) {
+		int width = Math.min(480, source.getWidth());
+		int height = Math.max(1, (int) ((float) source.getHeight() * width / source.getWidth()));
+		Bitmap scaled = Bitmap.createScaledBitmap(source, width, height, true);
+		File file = new File(path);
+		File dir = file.getParentFile();
+		if (dir != null && !dir.isDirectory() && !dir.mkdirs()) {
+			return;
+		}
+		try (OutputStream out = new FileOutputStream(file)) {
+			scaled.compress(Bitmap.CompressFormat.PNG, 70, out);
+		} catch (IOException e) {
+			Log.w("MicroActivity", "Can't write a thumbnail", e);
+		} finally {
+			if (scaled != source) {
+				scaled.recycle();
+			}
+			source.recycle();
+		}
+	}
+
 	private void openInNewWindow() {
 		int slot = Config.findFreeMidletSlot(this);
 		if (slot < 0) {
@@ -905,6 +966,7 @@ public class MicroActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		unregisterReceiver(commandReceiver);
 		// Stop the MIDlet thread explicitly (fixes stuck audio)
 		MidletThread.destroyApp();
 		binding = null;

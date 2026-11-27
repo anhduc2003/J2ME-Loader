@@ -87,6 +87,8 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import javax.microedition.shell.MultiRowActivity;
+
 import ru.playsoftware.j2meloader.R;
 import ru.playsoftware.j2meloader.appsdb.AppRepository;
 import ru.playsoftware.j2meloader.config.Config;
@@ -607,6 +609,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		if (itemId == R.id.action_about) {
 			AboutDialogFragment aboutDialogFragment = new AboutDialogFragment();
 			aboutDialogFragment.show(getChildFragmentManager(), "about");
+		} else if (itemId == R.id.action_multi_row) {
+			startActivity(new Intent(activity, MultiRowActivity.class));
 		} else if (itemId == R.id.action_profiles) {
 			Intent intentProfiles = new Intent(activity, ProfilesActivity.class);
 			startActivity(intentProfiles);
