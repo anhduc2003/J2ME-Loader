@@ -509,6 +509,7 @@ public class MicroActivity extends AppCompatActivity {
 		}
 		if (ContextHolder.getVk() == null) {
 			menu.findItem(R.id.action_submenu_vk).setVisible(false);
+			menu.findItem(R.id.action_hide_vk).setVisible(false);
 		}
 		return true;
 	}
@@ -521,6 +522,7 @@ public class MicroActivity extends AppCompatActivity {
 			if (vk != null) {
 				boolean visible = vk.getLayoutEditMode() != VirtualKeyboard.LAYOUT_EOF;
 				menu.findItem(R.id.action_layout_edit_finish).setVisible(visible);
+				menu.findItem(R.id.action_hide_vk).setChecked(vk.isHidden());
 			}
 		} else {
 			menu.setGroupVisible(R.id.action_group_canvas, false);
@@ -552,6 +554,13 @@ public class MicroActivity extends AppCompatActivity {
 			takeScreenshot();
 		} else if (id == R.id.action_limit_fps) {
 			showLimitFpsDialog();
+		} else if (id == R.id.action_hide_vk) {
+			VirtualKeyboard vk = ContextHolder.getVk();
+			if (vk != null) {
+				boolean hide = !vk.isHidden();
+				vk.setHidden(hide);
+				item.setChecked(hide);
+			}
 		} else if (ContextHolder.getVk() != null) {
 			// Handled only when virtual keyboard is enabled
 			handleVkOptions(id);
@@ -561,6 +570,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	private void handleVkOptions(int id) {
 		VirtualKeyboard vk = ContextHolder.getVk();
+		if (id == R.id.action_layout_edit_mode || id == R.id.action_layout_scale_mode
+				|| id == R.id.action_layout_switch || id == R.id.action_hide_buttons) {
+			vk.setHidden(false);
+		}
 		if (id == R.id.action_layout_edit_mode) {
 			vk.setLayoutEditMode(VirtualKeyboard.LAYOUT_KEYS);
 			Toast.makeText(this, R.string.layout_edit_mode, Toast.LENGTH_SHORT).show();

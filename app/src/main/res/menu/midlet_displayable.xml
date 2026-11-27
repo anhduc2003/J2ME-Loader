@@ -26,6 +26,11 @@
             android:title="@string/PREF_LIMIT_FPS" />
 
         <item
+            android:id="@+id/action_hide_vk"
+            android:title="@string/action_hide_vk"
+            android:checkable="true" />
+
+        <item
             android:id="@+id/action_submenu_vk"
             android:title="@string/PREF_VIRTUAL_KEYBOARD_OPTIONS">
             <menu>

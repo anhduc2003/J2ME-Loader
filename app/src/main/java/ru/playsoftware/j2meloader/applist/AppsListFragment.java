@@ -58,6 +58,8 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
@@ -180,7 +182,9 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		});
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
-		adapter.setFolderFilter(preferences.getString(PREF_APP_FOLDER, null));
+		String folder = preferences.getString(PREF_APP_FOLDER, null);
+		adapter.setFolderFilter(folder);
+		updateFolderSubtitle(folder);
 		adapter.setSelectionListener(this::onSelectionChanged);
 		requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), backCallback);
 		binding.floatingActionButton.setOnClickListener(v -> {
@@ -395,6 +399,14 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private void setFolderFilter(String folder) {
 		preferences.edit().putString(PREF_APP_FOLDER, folder).apply();
 		adapter.setFolderFilter(folder);
+		updateFolderSubtitle(folder);
+	}
+
+	private void updateFolderSubtitle(String folder) {
+		ActionBar actionBar = ((AppCompatActivity) requireActivity()).getSupportActionBar();
+		if (actionBar != null) {
+			actionBar.setSubtitle(folder);
+		}
 	}
 
 	private void alertInput(int titleRes, CharSequence initial, InputCallback onConfirm) {

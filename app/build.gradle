@@ -7,6 +7,9 @@ plugins {
 def midletArchivesBaseName
 
 android {
+    def keystorePropsFile = rootProject.file("keystore.properties")
+    def hasReleaseKeystore = keystorePropsFile.exists()
+
     compileSdk COMPILE_SDK
     ndkVersion NDK_VERSION
     namespace 'ru.playsoftware.j2meloader'
@@ -29,8 +32,7 @@ android {
     signingConfigs {
         release {
             Properties keystoreProps = new Properties()
-            File keystorePropsFile = rootProject.file("keystore.properties")
-            if (keystorePropsFile.exists()) {
+            if (hasReleaseKeystore) {
                 keystoreProps.load(new FileInputStream(keystorePropsFile))
                 keyAlias keystoreProps['keyAlias']
                 keyPassword keystoreProps['keyPassword']
@@ -44,7 +46,7 @@ android {
         release {
             minifyEnabled true
             shrinkResources true
-            signingConfig signingConfigs.release
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.getByName("debug")
         }
         debug {
             applicationIdSuffix '.debug'

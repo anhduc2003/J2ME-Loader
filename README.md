@@ -29,6 +29,8 @@ System requirements: Android 5.0+
  - Image flickering issues can be fixed by enabling the "Immediate processing mode" option.
  - Long-press a game and pick "Move to folder" to group your library; the folders button in the toolbar filters the list, and the "Recently played" sort order puts the last launched game first.
  - Use "Select" from the overflow menu to move several games to a folder or delete them at once.
+ - The "Folder" sort order groups the library by folder, and the current folder shows up as the toolbar subtitle while a filter is active.
+ - Inside a game, the menu has "Hide virtual keyboard" to clear the on-screen keys for the current session without touching the app settings.
 
 ## Screenshots
 

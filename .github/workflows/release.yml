@@ -41,12 +41,12 @@ jobs:
           ENCODED_KEYSTORE: ${{ secrets.SIGNING_KEY }}
           ENCODED_PROPS: ${{ secrets.KEYSTORE_PROPERTIES }}
         run: |
-          if [ -z "$ENCODED_KEYSTORE" ] || [ -z "$ENCODED_PROPS" ]; then
-            echo "::error::Set repository secrets SIGNING_KEY and KEYSTORE_PROPERTIES"
-            exit 1
+          if [ -n "$ENCODED_KEYSTORE" ] && [ -n "$ENCODED_PROPS" ]; then
+            printf '%s' "$ENCODED_KEYSTORE" | base64 -di > app/keystore.jks
+            printf '%s' "$ENCODED_PROPS" | base64 -di > keystore.properties
+          else
+            echo "::notice::SIGNING_KEY and KEYSTORE_PROPERTIES are not set; the APK will be signed with the debug key."
           fi
-          printf '%s' "$ENCODED_KEYSTORE" | base64 -di > app/keystore.jks
-          printf '%s' "$ENCODED_PROPS" | base64 -di > keystore.properties
 
       - name: Build release APKs
         run: |
