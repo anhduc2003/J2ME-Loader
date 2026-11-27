@@ -87,6 +87,24 @@
         <item name="android:textColor">?attr/textColorPrimary</item>
     </style>
 
+    <style name="MiniKey" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_columnWeight">1</item>
+        <item name="android:layout_rowWeight">1</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:background">@drawable/bg_key_mini</item>
+        <item name="android:layout_margin">1dp</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+    </style>
+
     <style name="ButtonStyle" parent="Widget.AppCompat.Button.Colored">
         <item name="android:minHeight">38dp</item>
         <item name="android:paddingLeft">6dp</item>

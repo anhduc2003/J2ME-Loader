@@ -40,6 +40,11 @@
         app:showAsAction="never"
         android:orderInCategory="4" />
     <item
+        android:id="@+id/action_multi_row"
+        android:title="@string/multi_row_menu"
+        app:showAsAction="never"
+        android:orderInCategory="5" />
+    <item
         android:id="@+id/action_profiles"
         android:title="@string/profiles"
         app:showAsAction="never"

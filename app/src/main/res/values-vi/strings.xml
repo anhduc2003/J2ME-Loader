@@ -202,6 +202,23 @@
     <string name="pref_app_sort_folder">Thư mục</string>
     <string name="action_hide_vk">Ẩn bàn phím ảo</string>
     <string name="action_open_window">Mở cửa sổ mới</string>
+    <string name="multi_row_title">Chia hàng đa nhiệm</string>
+    <string name="multi_row_menu">Chia hàng đa nhiệm</string>
+    <string name="multi_row_library_hint">ẤN ĐỂ THÊM VÀO HÀNG TRỰC TIẾP:</string>
+    <string name="multi_row_settings_header">THIẾT LẬP CHẾ ĐỘ CHIA HÀNG</string>
+    <string name="multi_row_enable">Chạy trực tiếp chia hàng cố định</string>
+    <string name="multi_row_limit">Số hàng hiển thị:</string>
+    <string name="multi_row_row_label">Hàng %1$d</string>
+    <string name="multi_row_title_row">%1$s (Hàng %2$s)</string>
+    <string name="multi_row_limited">Chỉ nên chạy tối đa %1$d hàng để giữ độ ổn định</string>
+    <string name="multi_row_no_games">Chưa cài game nào</string>
+    <string name="action_zoom_window">Phóng to</string>
+    <string name="game_icon">Biểu tượng game</string>
+    <string name="key_up">\u25B2</string>
+    <string name="key_down">\u25BC</string>
+    <string name="key_left">\u25C0</string>
+    <string name="key_right">\u25B6</string>
+
     <string name="action_float_window">Thu nhỏ thành cửa sổ nổi</string>
     <string name="pref_float_windows_title">Cửa sổ game nổi</string>
     <string name="pref_float_windows_summary">Mở game thành cửa sổ nổi nhỏ trên thư viện; dùng nút phóng to của hệ thống để chạy toàn màn hình</string>

@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.REORDER_TASKS" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -149,6 +150,10 @@
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize|uiMode"
             android:supportsPictureInPicture="true"
             android:process=":midlet3" />
+        <activity
+            android:name="javax.microedition.shell.MultiRowActivity"
+            android:exported="false"
+            android:label="@string/multi_row_title" />
         <activity android:name=".settings.SettingsActivity"
             android:exported="false">
             <intent-filter>
