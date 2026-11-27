@@ -122,7 +122,7 @@ public class FileSystemFileConnection implements FileConnection {
 			return Config.getFsExternalDir();
 		}
 		if (root.equalsIgnoreCase(ROOT_SYS)) {
-			return Config.getDataDir();
+			return Config.getInstanceDataDir();
 		}
 		return Config.getFsInternalDir();
 	}

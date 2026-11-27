@@ -22,6 +22,9 @@ import static ru.playsoftware.j2meloader.util.Constants.ACTION_EDIT;
 import static ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;
 
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,8 +35,11 @@ import androidx.annotation.Keep;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.microedition.shell.MicroActivity;
+import javax.microedition.shell.MicroActivityInstance2;
+import javax.microedition.shell.MicroActivityInstance3;
 import javax.microedition.util.ContextHolder;
 
 import ru.playsoftware.j2meloader.BuildConfig;
@@ -59,12 +65,15 @@ public class Config {
 	public static final String SHADERS_DIR = "/shaders/";
 	public static final String SOUNDBANKS_DIR = "/soundbanks/";
 	public static final String APPS_DB_NAME = "/J2ME-apps.db";
+	public static final String INSTANCES_DIR = "/instances/";
+	public static final int MAX_INSTANCES = 3;
 
 	private static String emulatorDir;
 	private static String dataDir;
 	private static String configsDir;
 	private static String profilesDir;
 	private static String appDir;
+	private static int instanceSlot = 1;
 
 	@Keep
 	private static final SharedPreferences.OnSharedPreferenceChangeListener sPrefListener =
@@ -91,6 +100,95 @@ public class Config {
 		}
 		initDirs(path);
 		preferences.registerOnSharedPreferenceChangeListener(sPrefListener);
+	}
+
+	public static int getInstanceSlot() {
+		return instanceSlot;
+	}
+
+	public static void setInstanceSlot(int slot) {
+		instanceSlot = Math.max(1, slot);
+	}
+
+	public static String getInstanceDataDir() {
+		return instanceSlot > 1 ? dataDir + INSTANCES_DIR + instanceSlot : dataDir;
+	}
+
+	public static File getSlotDataDir(int slot) {
+		return new File(dataDir + INSTANCES_DIR + slot);
+	}
+
+	public static void prepareInstanceData(String appPath) {
+		if (instanceSlot <= 1) {
+			return;
+		}
+		String appName = new File(appPath).getName();
+		File target = new File(getInstanceDataDir(), appName);
+		if (target.exists()) {
+			return;
+		}
+		copyTree(new File(dataDir, appName), target);
+		File instanceFs = new File(emulatorDir + FS_DIR + "instance-" + instanceSlot);
+		if (!instanceFs.exists()) {
+			copyTree(new File(emulatorDir + FS_DIR + "c"), new File(instanceFs, "c"));
+			instanceFs.mkdirs();
+		}
+	}
+
+	private static void copyTree(File src, File dst) {
+		if (src.isDirectory()) {
+			File[] files = src.listFiles();
+			if (files == null) {
+				return;
+			}
+			if (!dst.isDirectory() && !dst.mkdirs()) {
+				return;
+			}
+			for (File file : files) {
+				copyTree(file, new File(dst, file.getName()));
+			}
+		} else if (src.isFile()) {
+			File parent = dst.getParentFile();
+			if (parent != null && !parent.isDirectory() && !parent.mkdirs()) {
+				return;
+			}
+			try {
+				FileUtils.copyFileUsingChannel(src, dst);
+			} catch (IOException ignored) {
+			}
+		}
+	}
+
+	public static int findFreeMidletSlot(Context context) {
+		ActivityManager activityManager =
+				(ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		boolean second = false;
+		boolean third = false;
+		if (activityManager != null) {
+			for (ActivityManager.AppTask task : activityManager.getAppTasks()) {
+				Intent intent = task.getTaskInfo().baseIntent;
+				ComponentName component = intent == null ? null : intent.getComponent();
+				String className = component == null ? null : component.getClassName();
+				if (MicroActivityInstance2.class.getName().equals(className)) {
+					second = true;
+				} else if (MicroActivityInstance3.class.getName().equals(className)) {
+					third = true;
+				}
+			}
+		}
+		if (!second) {
+			return 2;
+		}
+		return third ? -1 : 3;
+	}
+
+	public static void startAppInSlot(Context context, String name, String path, int slot) {
+		Class<? extends Activity> activity = slot >= 3
+				? MicroActivityInstance3.class : MicroActivityInstance2.class;
+		Intent intent = new Intent(Intent.ACTION_DEFAULT, Uri.parse(path), context, activity);
+		intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		intent.putExtra(KEY_MIDLET_NAME, name);
+		context.startActivity(intent);
 	}
 
 	public static String getEmulatorDir() {
@@ -122,7 +220,7 @@ public class Config {
 	}
 
 	public static String getFsInternalDir() {
-		return emulatorDir + FS_DIR + "c/";
+		return emulatorDir + FS_DIR + (instanceSlot > 1 ? "instance-" + instanceSlot + "/" : "") + "c/";
 	}
 
 	public static String getFsExternalDir() {

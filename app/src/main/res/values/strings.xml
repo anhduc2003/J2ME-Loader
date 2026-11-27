@@ -249,6 +249,8 @@
     <string name="pref_app_sort_recent">Recently played</string>
     <string name="pref_app_sort_folder">Folder</string>
     <string name="action_hide_vk">Hide virtual keyboard</string>
+    <string name="action_open_window">Open in new window</string>
+    <string name="error_max_windows">All extra windows are already open</string>
     <string name="pref_apps_view">view</string>
     <string name="pref_map_keys">Key mappings</string>
     <string name="pref_encoding_title">Encoding</string>

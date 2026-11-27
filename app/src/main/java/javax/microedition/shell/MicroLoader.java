@@ -113,7 +113,7 @@ public class MicroLoader {
 		ensureDirectory(internalDriveDir);
 		File externalDriveDir = new File(Config.getFsExternalDir());
 		ensureDirectory(externalDriveDir);
-		File appDataDir = new File(Config.getDataDir(), appDirName);
+		File appDataDir = new File(Config.getInstanceDataDir(), appDirName);
 		ensureDirectory(new File(appDataDir, "private"));
 		ensureDirectory(new File(appDataDir, "cache"));
 		ensureDirectory(new File(externalDriveDir, Environment.DIRECTORY_PICTURES));

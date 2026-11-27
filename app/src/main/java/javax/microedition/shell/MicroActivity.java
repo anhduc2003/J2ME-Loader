@@ -39,6 +39,7 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -121,6 +122,10 @@ public class MicroActivity extends AppCompatActivity {
 
 	public ActivityMicroBinding binding;
 
+	protected int getInstanceSlot() {
+		return 1;
+	}
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
@@ -131,11 +136,13 @@ public class MicroActivity extends AppCompatActivity {
 
 		super.onCreate(savedInstanceState);
 		ContextHolder.setCurrentActivity(this);
+		Config.setInstanceSlot(getInstanceSlot());
 
 		binding = ActivityMicroBinding.inflate(getLayoutInflater());
 		View view = binding.getRoot();
 		setContentView(view);
 		setSupportActionBar(binding.toolbar);
+		applyMaxRefreshRate();
 
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
@@ -182,7 +189,9 @@ public class MicroActivity extends AppCompatActivity {
 				}
 			}
 		}
-		MidletSystem.setProperty("com.nokia.mid.cmdline.instance", "1");
+		MidletSystem.setProperty("com.nokia.mid.cmdline.instance",
+				String.valueOf(Config.getInstanceSlot()));
+		Config.prepareInstanceData(appPath);
 		microLoader = new MicroLoader(this, appPath);
 		if (!microLoader.init()) {
 			Config.startApp(this, appName, appPath, true, arguments);
@@ -210,6 +219,32 @@ public class MicroActivity extends AppCompatActivity {
 			e.printStackTrace();
 			showErrorDialog(e.toString());
 		}
+	}
+
+	private void applyMaxRefreshRate() {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+			return;
+		}
+		Display display = getWindowManager().getDefaultDisplay();
+		Display.Mode current = display.getMode();
+		float maxRefreshRate = current.getRefreshRate();
+		int bestModeId = current.getModeId();
+		for (Display.Mode mode : display.getSupportedModes()) {
+			if (mode.getPhysicalWidth() != current.getPhysicalWidth()
+					|| mode.getPhysicalHeight() != current.getPhysicalHeight()) {
+				continue;
+			}
+			if (mode.getRefreshRate() > maxRefreshRate) {
+				maxRefreshRate = mode.getRefreshRate();
+				bestModeId = mode.getModeId();
+			}
+		}
+		if (bestModeId == current.getModeId() || maxRefreshRate <= 60f) {
+			return;
+		}
+		WindowManager.LayoutParams attributes = getWindow().getAttributes();
+		attributes.preferredDisplayModeId = bestModeId;
+		getWindow().setAttributes(attributes);
 	}
 
 	public void lockNightMode() {

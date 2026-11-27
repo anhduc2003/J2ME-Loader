@@ -31,6 +31,8 @@ System requirements: Android 5.0+
  - Use "Select" from the overflow menu to move several games to a folder or delete them at once.
  - The "Folder" sort order groups the library by folder, and the current folder shows up as the toolbar subtitle while a filter is active.
  - Inside a game, the menu has "Hide virtual keyboard" to clear the on-screen keys for the current session without touching the app settings.
+ - Long-press a game and pick "Open in new window" to run it again in a second (or third) window next to the first. Each extra window runs in its own process with a copy of the game data, so saves and record stores do not collide. Floating windows need a device or desktop mode that supports free-form windows; otherwise the windows live in separate tasks.
+ - The emulator asks the display for its fastest refresh mode, so on 90/120 Hz screens games that draw that fast are no longer held to 60 Hz.
 
 ## Screenshots
 

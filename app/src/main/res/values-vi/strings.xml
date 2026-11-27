@@ -201,6 +201,8 @@
     <string name="pref_app_sort_recent">Vừa chơi</string>
     <string name="pref_app_sort_folder">Thư mục</string>
     <string name="action_hide_vk">Ẩn bàn phím ảo</string>
+    <string name="action_open_window">Mở cửa sổ mới</string>
+    <string name="error_max_windows">Đã mở hết số cửa sổ phụ</string>
     <string name="pref_map_keys">Phím ánh xạ</string>
     <string name="pref_encoding_title">Mã hóa</string>
     <string name="pref_default_settings">Thiết lập mặc định</string>
