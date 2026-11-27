@@ -250,6 +250,10 @@
     <string name="pref_app_sort_folder">Folder</string>
     <string name="action_hide_vk">Hide virtual keyboard</string>
     <string name="action_open_window">Open in new window</string>
+    <string name="action_float_window">Float this game</string>
+    <string name="pref_float_windows_title">Floating game windows</string>
+    <string name="pref_float_windows_summary">Open a game in a small floating window over the library; use the system expand button for full screen</string>
+    <string name="float_window_unavailable">This device does not support floating windows</string>
     <string name="error_max_windows">All extra windows are already open</string>
     <string name="pref_apps_view">view</string>
     <string name="pref_map_keys">Key mappings</string>

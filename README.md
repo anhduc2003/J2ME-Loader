@@ -33,6 +33,7 @@ System requirements: Android 5.0+
  - Inside a game, the menu has "Hide virtual keyboard" to clear the on-screen keys for the current session without touching the app settings.
  - Long-press a game and pick "Open in new window" to run it again in a second (or third) window next to the first. Each extra window runs in its own process with a copy of the game data, so saves and record stores do not collide. Floating windows need a device or desktop mode that supports free-form windows; otherwise the windows live in separate tasks.
  - The emulator asks the display for its fastest refresh mode, so on 90/120 Hz screens games that draw that fast are no longer held to 60 Hz.
+ - "Floating game windows" in Settings opens a game as a small window over the library (Picture-in-Picture). Use the system expand control to go full screen, or the in-game menu's "Float this game" to shrink it back; the setting is on by default and can be switched off.
 
 ## Screenshots
 
