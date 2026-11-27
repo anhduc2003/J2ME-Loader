@@ -16,19 +16,32 @@
 
 package ru.playsoftware.j2meloader.appsdb;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import ru.playsoftware.j2meloader.EmulatorApplication;
 import ru.playsoftware.j2meloader.applist.AppItem;
 
-@Database(entities = {AppItem.class}, version = 1, exportSchema = false)
+@Database(entities = {AppItem.class}, version = 2, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
+
+	static final Migration MIGRATION_1_2 = new Migration(1, 2) {
+		@Override
+		public void migrate(@NonNull SupportSQLiteDatabase database) {
+			database.execSQL("ALTER TABLE apps ADD COLUMN lastPlayed INTEGER NOT NULL DEFAULT 0");
+			database.execSQL("ALTER TABLE apps ADD COLUMN folder TEXT");
+		}
+	};
 
 	public abstract AppItemDao appItemDao();
 
 	static synchronized AppDatabase open(String path) {
-		return Room.databaseBuilder(EmulatorApplication.getInstance(), AppDatabase.class, path).build();
+		return Room.databaseBuilder(EmulatorApplication.getInstance(), AppDatabase.class, path)
+				.addMigrations(MIGRATION_1_2)
+				.build();
 	}
 }

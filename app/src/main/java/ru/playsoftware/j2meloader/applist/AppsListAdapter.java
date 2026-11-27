@@ -18,7 +18,10 @@
 
 package ru.playsoftware.j2meloader.applist;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,25 +36,42 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ListRowGridJarBinding;
 import ru.playsoftware.j2meloader.databinding.ListRowJarBinding;
+import ru.playsoftware.j2meloader.util.LibraryFilter;
 
 class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder> implements Filterable {
 	static final int LAYOUT_TYPE_LIST = 0;
 	static final int LAYOUT_TYPE_GRID = 1;
 
+	interface OnAppClickListener {
+		void onAppClick(AppItem item);
+	}
+
+	interface OnSelectionChangeListener {
+		void onSelectionChanged(int count);
+	}
+
 	private final View.OnCreateContextMenuListener contextMenuListener;
+	private final OnAppClickListener appClickListener;
 	private List<AppItem> list = new ArrayList<>();
 	private final AppFilter appFilter = new AppFilter();
+	private final Set<Integer> selectedIds = new LinkedHashSet<>();
 	private CharSequence filterConstraint;
+	private String folderConstraint;
 	private View emptyView;
+	private OnSelectionChangeListener selectionListener;
+	private boolean selectionMode;
+	private int selectionColor;
 	private int layout = LAYOUT_TYPE_LIST;
 
-	AppsListAdapter(View.OnCreateContextMenuListener contextMenuListener) {
+	AppsListAdapter(View.OnCreateContextMenuListener contextMenuListener, OnAppClickListener appClickListener) {
 		super(new DiffUtil.ItemCallback<AppItem>() {
 			@Override
 			public boolean areItemsTheSame(@NonNull AppItem oldItem, @NonNull AppItem newItem) {
@@ -61,10 +81,13 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			@Override
 			public boolean areContentsTheSame(@NonNull AppItem oldItem, @NonNull AppItem newItem) {
 				return oldItem.getTitle().equals(newItem.getTitle()) &&
-						oldItem.getVersion().equals(newItem.getVersion());
+						oldItem.getVersion().equals(newItem.getVersion()) &&
+						oldItem.getLastPlayed() == newItem.getLastPlayed() &&
+						Objects.equals(oldItem.getFolder(), newItem.getFolder());
 			}
 		});
 		this.contextMenuListener = contextMenuListener;
+		this.appClickListener = appClickListener;
 	}
 
 	@Override
@@ -95,6 +118,86 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		appFilter.filter(filterConstraint);
 	}
 
+	void setFolderFilter(String folder) {
+		if (Objects.equals(folder, folderConstraint)) {
+			return;
+		}
+		folderConstraint = folder;
+		appFilter.filter(filterConstraint);
+	}
+
+	List<String> getFolders() {
+		return LibraryFilter.collectFolders(list);
+	}
+
+	void setSelectionListener(OnSelectionChangeListener listener) {
+		selectionListener = listener;
+	}
+
+	boolean isSelectionMode() {
+		return selectionMode;
+	}
+
+	void setSelectionMode(boolean enabled) {
+		if (selectionMode == enabled) {
+			return;
+		}
+		selectionMode = enabled;
+		selectedIds.clear();
+		notifyDataSetChanged();
+	}
+
+	boolean isSelected(AppItem item) {
+		return selectedIds.contains(item.getId());
+	}
+
+	void toggleSelection(AppItem item) {
+		int position = getCurrentList().indexOf(item);
+		if (position < 0) {
+			return;
+		}
+		if (!selectedIds.remove(item.getId())) {
+			selectedIds.add(item.getId());
+		}
+		notifyItemChanged(position);
+		if (selectionListener != null) {
+			selectionListener.onSelectionChanged(selectedIds.size());
+		}
+	}
+
+	void selectAll() {
+		selectedIds.clear();
+		for (AppItem item : getCurrentList()) {
+			selectedIds.add(item.getId());
+		}
+		notifyDataSetChanged();
+		if (selectionListener != null) {
+			selectionListener.onSelectionChanged(selectedIds.size());
+		}
+	}
+
+	List<AppItem> getSelectedItems() {
+		List<AppItem> selected = new ArrayList<>();
+		for (AppItem item : getCurrentList()) {
+			if (selectedIds.contains(item.getId())) {
+				selected.add(item);
+			}
+		}
+		return selected;
+	}
+
+	private int getSelectionColor(Context context) {
+		if (selectionColor == 0) {
+			TypedValue value = new TypedValue();
+			if (context.getTheme().resolveAttribute(android.R.attr.colorControlHighlight, value, true)) {
+				selectionColor = value.data;
+			} else {
+				selectionColor = Color.TRANSPARENT;
+			}
+		}
+		return selectionColor;
+	}
+
 	@Override
 	public Filter getFilter() {
 		return appFilter;
@@ -111,6 +214,7 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 	static class AppViewHolder extends RecyclerView.ViewHolder {
 		private final ImageView icon;
 		private final TextView name;
+		private final Drawable defaultBackground;
 
 		AppViewHolder(ListRowGridJarBinding binding, View.OnCreateContextMenuListener contextMenuListener) {
 			this(binding.getRoot(), binding.listTitle, binding.listImage, contextMenuListener);
@@ -123,12 +227,18 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			super(itemView);
 			icon = listImage;
 			name = listTitle;
+			defaultBackground = itemView.getBackground();
 
 			itemView.setOnClickListener(v -> {
 				AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
-				if (adapter != null) {
-					AppItem item = adapter.getItem(getLayoutPosition());
-					Config.startApp(v.getContext(), item.getTitle(), item.getPathExt(), false);
+				if (adapter == null) {
+					return;
+				}
+				AppItem item = adapter.getItem(getLayoutPosition());
+				if (adapter.selectionMode) {
+					adapter.toggleSelection(item);
+				} else {
+					adapter.appClickListener.onAppClick(item);
 				}
 			});
 			itemView.setOnCreateContextMenuListener(contextMenuListener);
@@ -144,6 +254,12 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			}
 			name.setText(item.getTitle());
 			itemView.setTag(item);
+			AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
+			if (adapter != null && adapter.isSelectionMode() && adapter.isSelected(item)) {
+				itemView.setBackgroundColor(adapter.getSelectionColor(itemView.getContext()));
+			} else {
+				itemView.setBackground(defaultBackground);
+			}
 		}
 	}
 
@@ -170,14 +286,14 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		@Override
 		protected FilterResults performFiltering(CharSequence constraint) {
 			FilterResults results = new FilterResults();
-			if (isEmpty(constraint)) {
+			String folder = folderConstraint;
+			if (isEmpty(constraint) && folder == null) {
 				results.count = list.size();
 				results.values = list;
 			} else {
 				ArrayList<AppItem> resultList = new ArrayList<>();
 				for (AppItem item : list) {
-					if (item.getTitle().toLowerCase().contains(constraint) ||
-							item.getAuthor().toLowerCase().contains(constraint)) {
+					if (LibraryFilter.matches(item, constraint, folder)) {
 						resultList.add(item);
 					}
 				}
@@ -199,12 +315,18 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			if (results.count > 0) {
 				emptyView.setVisibility(View.GONE);
 			} else {
+				int message;
 				if (list.isEmpty()) {
-					((TextView) emptyView).setText(R.string.no_data_for_display);
+					message = R.string.no_data_for_display;
+				} else if (isEmpty(constraint)) {
+					message = R.string.msg_folder_empty;
 				} else {
-					String msg = emptyView.getResources().getString(R.string.msg_no_matches, constraint);
-					((TextView) emptyView).setText(msg);
+					message = R.string.msg_no_matches;
 				}
+				String msg = message == R.string.msg_no_matches
+						? emptyView.getResources().getString(message, constraint)
+						: emptyView.getResources().getString(message);
+				((TextView) emptyView).setText(msg);
 				emptyView.setVisibility(View.VISIBLE);
 			}
 		}

@@ -178,6 +178,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 	private View overlayView;
 	private boolean obscuresVirtualScreen;
 	private boolean visible = true;
+	private boolean hidden;
 	private int layoutEditMode = LAYOUT_EOF;
 	private int editedIndex;
 	private float offsetX;
@@ -906,7 +907,7 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public void paint(CanvasWrapper g) {
-		if (visible) {
+		if (visible && !hidden) {
 			for (VirtualKey key : keypad) {
 				if (key.visible) {
 					key.paint(g);
@@ -917,6 +918,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public boolean pointerPressed(int pointer, float x, float y) {
+		if (hidden) {
+			return false;
+		}
 		switch (layoutEditMode) {
 			case LAYOUT_EOF:
 				if (pointer > associatedKeys.length) {
@@ -969,6 +973,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public boolean pointerDragged(int pointer, float x, float y) {
+		if (hidden) {
+			return false;
+		}
 		switch (layoutEditMode) {
 			case LAYOUT_EOF:
 				if (pointer > associatedKeys.length) {
@@ -1041,6 +1048,9 @@ public class VirtualKeyboard implements Overlay, Runnable {
 
 	@Override
 	public boolean pointerReleased(int pointer, float x, float y) {
+		if (hidden) {
+			return false;
+		}
 		if (layoutEditMode == LAYOUT_EOF) {
 			if (pointer > associatedKeys.length) {
 				return false;
@@ -1078,6 +1088,18 @@ public class VirtualKeyboard implements Overlay, Runnable {
 			editedIndex = -1;
 		}
 		return false;
+	}
+
+	public boolean isHidden() {
+		return hidden;
+	}
+
+	public void setHidden(boolean hidden) {
+		this.hidden = hidden;
+		if (!hidden) {
+			visible = true;
+		}
+		overlayView.postInvalidate();
 	}
 
 	@Override

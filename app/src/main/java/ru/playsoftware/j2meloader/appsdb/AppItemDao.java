@@ -65,4 +65,10 @@ public interface AppItemDao {
 
 	@Query("SELECT * FROM apps WHERE id = :id")
 	AppItem get(int id);
+
+	@Query("UPDATE apps SET folder = :name WHERE folder = :from")
+	Completable renameFolder(String from, String name);
+
+	@Query("UPDATE apps SET folder = NULL WHERE folder = :name")
+	Completable clearFolder(String name);
 }
