@@ -572,6 +572,8 @@ public class MicroActivity extends AppCompatActivity {
 			showExitConfirmation();
 		} else if (id == R.id.action_save_log) {
 			saveLog();
+		} else if (id == R.id.action_new_window) {
+			openInNewWindow();
 		} else if (id == R.id.action_lock_orientation) {
 			if (item.isChecked()) {
 				VirtualKeyboard vk = ContextHolder.getVk();
@@ -601,6 +603,15 @@ public class MicroActivity extends AppCompatActivity {
 			handleVkOptions(id);
 		}
 		return true;
+	}
+
+	private void openInNewWindow() {
+		int slot = Config.findFreeMidletSlot(this);
+		if (slot < 0) {
+			Toast.makeText(this, R.string.error_max_windows, Toast.LENGTH_SHORT).show();
+		} else {
+			Config.startAppInSlot(this, appName, appPath, slot);
+		}
 	}
 
 	private void handleVkOptions(int id) {
