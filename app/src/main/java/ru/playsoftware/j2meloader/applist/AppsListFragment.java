@@ -190,6 +190,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		adapter.setSelectionListener(this::onSelectionChanged);
 		requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), backCallback);
 		binding.floatingActionButton.setOnClickListener(v -> {
+			setFolderFilter(null);
 			String path = preferences.getString(PREF_LAST_PATH, null);
 			if (path == null) {
 				File dir = Environment.getExternalStorageDirectory();
@@ -224,6 +225,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		if (uris == null || uris.isEmpty()) {
 			return;
 		}
+		setFolderFilter(null);
 		preferences.edit()
 				.putString(PREF_LAST_PATH, uris.get(0).getPath())
 				.apply();
@@ -492,6 +494,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		} else if (itemId == R.id.action_context_settings) {
 			Config.startApp(requireActivity(), appItem.getTitle(), appItem.getPathExt(), true);
 		} else if (itemId == R.id.action_context_reinstall) {
+			setFolderFilter(null);
 			InstallerDialog.newInstance(appItem.getId()).show(getParentFragmentManager(), "installer");
 		} else if (itemId == R.id.action_context_delete) {
 			alertDelete(appItem);
@@ -691,6 +694,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			setFolderFilter(null);
 		}
 		if (appUri != null) {
+			setFolderFilter(null);
 			InstallerDialog.newInstance(appUri).show(getParentFragmentManager(), "installer");
 			appUri = null;
 		}
