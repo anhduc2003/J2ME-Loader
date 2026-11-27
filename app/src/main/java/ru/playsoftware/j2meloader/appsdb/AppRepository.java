@@ -22,6 +22,7 @@ import static ru.playsoftware.j2meloader.util.Constants.PREF_EMULATOR_DIR;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
@@ -48,6 +49,8 @@ import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.util.AppUtils;
 
 public class AppRepository implements SharedPreferences.OnSharedPreferenceChangeListener {
+	private static final String TAG = AppRepository.class.getSimpleName();
+
 	private final MutableLiveData<List<AppItem>> listLiveData = new MutableLiveData<>();
 	private final MutableLiveData<Throwable> errorsLiveData = new MutableLiveData<>();
 	private final CompositeDisposable compositeDisposable = new CompositeDisposable();
@@ -72,7 +75,14 @@ public class AppRepository implements SharedPreferences.OnSharedPreferenceChange
 	}
 
 	public void initDb(String path) {
-		db = AppDatabase.open(path + Config.APPS_DB_NAME);
+		String dbPath = path + Config.APPS_DB_NAME;
+		try {
+			db = AppDatabase.open(dbPath);
+		} catch (RuntimeException e) {
+			Log.e(TAG, "Can't open " + dbPath + ", recreating the catalog", e);
+			deleteDatabaseFiles(dbPath);
+			db = AppDatabase.open(dbPath);
+		}
 		appItemDao = db.appItemDao();
 		ConnectableFlowable<List<AppItem>> listConnectableFlowable = getAll()
 				.subscribeOn(Schedulers.io())
@@ -171,6 +181,15 @@ public class AppRepository implements SharedPreferences.OnSharedPreferenceChange
 				close();
 			}
 			initDb(workDir);
+		}
+	}
+
+	private static void deleteDatabaseFiles(String path) {
+		for (String suffix : new String[]{"", "-wal", "-shm", "-journal"}) {
+			File file = new File(path + suffix);
+			if (file.exists() && !file.delete()) {
+				Log.w(TAG, "Can't delete " + file);
+			}
 		}
 	}
 

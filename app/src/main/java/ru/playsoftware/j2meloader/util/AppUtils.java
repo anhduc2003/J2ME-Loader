@@ -132,10 +132,14 @@ public class AppUtils {
 			// TODO: 30.07.2021 incomplete installation - maybe can continue?
 			FileUtils.deleteDirectory(tmp);
 		}
-		String[] appFolders = new File(Config.getAppDir()).list();
-		if (appFolders == null || appFolders.length == 0) {
-			// If db isn't empty
-			if (items.size() != 0) {
+		File appsDir = new File(Config.getAppDir());
+		String[] appFolders = appsDir.list();
+		if (appFolders == null) {
+			Log.w(TAG, "updateDb: can't list " + appsDir + ", keeping the database");
+			return;
+		}
+		if (appFolders.length == 0) {
+			if (items.size() != 0 && appsDir.isDirectory()) {
 				appRepository.deleteAll();
 			}
 			return;
