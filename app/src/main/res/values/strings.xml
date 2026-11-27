@@ -41,6 +41,17 @@
     <string name="folder_none">No folder</string>
     <string name="folder_new">New folder…</string>
     <string name="msg_folder_empty">No games in this folder</string>
+    <string name="folder_manage">Manage folders</string>
+    <string name="folder_rename">Rename folder</string>
+    <string name="folder_delete">Delete folder</string>
+    <string name="folder_delete_message">Remove the folder \"%1$s\"? The games stay in your library.</string>
+    <string name="action_select">Select</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_cancel_selection">Cancel</string>
+    <plurals name="message_delete_multiple">
+        <item quantity="one">Delete %1$d app? Its saved data will be removed too.</item>
+        <item quantity="other">Delete %1$d apps? Their saved data will be removed too.</item>
+    </plurals>
     <string name="retry">retry</string>
     <string name="err_missing_app">Application not found.\nPlease check storage device %savailability or re-create shortcut.</string>
     <string name="error_disk_io">Storage error: check disk space</string>

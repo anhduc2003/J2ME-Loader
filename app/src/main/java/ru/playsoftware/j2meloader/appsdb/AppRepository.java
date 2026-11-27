@@ -118,6 +118,14 @@ public class AppRepository implements SharedPreferences.OnSharedPreferenceChange
 		update(item);
 	}
 
+	public void renameFolder(String from, String name) {
+		execute(appItemDao.renameFolder(from, name));
+	}
+
+	public void clearFolder(String name) {
+		execute(appItemDao.clearFolder(name));
+	}
+
 	public void delete(AppItem item) {
 		execute(appItemDao.delete(item));
 	}

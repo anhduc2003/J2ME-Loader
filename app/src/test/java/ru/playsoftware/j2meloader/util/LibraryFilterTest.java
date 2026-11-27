@@ -20,6 +20,11 @@ import org.junit.Test;
 
 import ru.playsoftware.j2meloader.applist.AppItem;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -70,6 +75,23 @@ public class LibraryFilterTest {
 		assertFalse(LibraryFilter.matchesFolder(unfiled, "Action"));
 		assertFalse(LibraryFilter.matchesFolder(blank, "Action"));
 		assertFalse(LibraryFilter.matchesFolder(action, "Strategy"));
+	}
+
+	@Test
+	public void collectsFoldersOnceIgnoringCaseAndBlankValues() {
+		List<AppItem> items = Arrays.asList(
+				item("Asphalt", "Gameloft", "Action"),
+				item("Bounce", "Nokia", null),
+				item("Snake", "Nokia", "  "),
+				item("Worms", "EA", "Strategy"),
+				item("Rayman", "Ubisoft", "action"));
+		assertEquals(Arrays.asList("Action", "Strategy"), LibraryFilter.collectFolders(items));
+	}
+
+	@Test
+	public void collectsNoFoldersFromUnfiledLibrary() {
+		List<AppItem> items = Collections.singletonList(item("Bounce", "Nokia", null));
+		assertTrue(LibraryFilter.collectFolders(items).isEmpty());
 	}
 
 	@Test

@@ -28,6 +28,7 @@ System requirements: Android 5.0+
  - Enabling filtering in some cases can greatly reduce performance. Disable this option if game is too slow.
  - Image flickering issues can be fixed by enabling the "Immediate processing mode" option.
  - Long-press a game and pick "Move to folder" to group your library; the folders button in the toolbar filters the list, and the "Recently played" sort order puts the last launched game first.
+ - Use "Select" from the overflow menu to move several games to a folder or delete them at once.
 
 ## Screenshots
 

@@ -16,7 +16,10 @@
 
 package ru.playsoftware.j2meloader.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.TreeSet;
 
 import ru.playsoftware.j2meloader.applist.AppItem;
 
@@ -51,6 +54,17 @@ public final class LibraryFilter {
 
 	public static boolean matches(AppItem item, CharSequence constraint, String folder) {
 		return matchesQuery(item, constraint) && matchesFolder(item, folder);
+	}
+
+	public static List<String> collectFolders(Iterable<AppItem> items) {
+		TreeSet<String> folders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		for (AppItem item : items) {
+			String folder = item.getFolder();
+			if (folder != null && !folder.trim().isEmpty()) {
+				folders.add(folder);
+			}
+		}
+		return new ArrayList<>(folders);
 	}
 
 	private static boolean contains(String value, String query) {

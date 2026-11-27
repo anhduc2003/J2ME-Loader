@@ -55,6 +55,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -113,6 +114,13 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private GridLayoutManager layoutManager;
 	private FragmentAppsListBinding binding;
 	private DividerItemDecoration itemDecoration;
+	private boolean selectionMode;
+	private final OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
+		@Override
+		public void handleOnBackPressed() {
+			setSelectionMode(false);
+		}
+	};
 
 	private interface InputCallback {
 		void onConfirm(String text);
@@ -172,6 +180,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
 		adapter.setFolderFilter(preferences.getString(PREF_APP_FOLDER, null));
+		adapter.setSelectionListener(this::onSelectionChanged);
+		requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), backCallback);
 		binding.floatingActionButton.setOnClickListener(v -> {
 			String path = preferences.getString(PREF_LAST_PATH, null);
 			if (path == null) {
@@ -238,42 +248,138 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		names.add(getString(R.string.folder_all));
 		names.addAll(folders);
 		int checked = current == null ? 0 : Math.max(names.indexOf(current), 0);
-		new AlertDialog.Builder(requireActivity())
+		AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity())
 				.setTitle(R.string.action_folder)
 				.setSingleChoiceItems(names.toArray(new String[0]), checked, (dialog, which) -> {
 					setFolderFilter(which == 0 ? null : names.get(which));
 					dialog.dismiss();
 				})
+				.setNegativeButton(android.R.string.cancel, null);
+		if (!folders.isEmpty()) {
+			builder.setNeutralButton(R.string.folder_manage, (dialog, which) -> showManageFoldersDialog());
+		}
+		builder.show();
+	}
+
+	private void showManageFoldersDialog() {
+		List<String> folders = adapter.getFolders();
+		if (folders.isEmpty()) {
+			return;
+		}
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(R.string.folder_manage)
+				.setItems(folders.toArray(new String[0]), (dialog, which) -> showFolderActions(folders.get(which)))
 				.setNegativeButton(android.R.string.cancel, null)
 				.show();
 	}
 
-	private void alertMoveToFolder(AppItem item) {
-		List<String> folders = adapter.getFolders();
-		List<String> actions = new ArrayList<>();
-		actions.add(getString(R.string.folder_new));
-		actions.add(getString(R.string.folder_none));
-		actions.addAll(folders);
-		String current = item.getFolder();
-		int checked = current == null ? 1 : actions.indexOf(current);
+	private void showFolderActions(String folder) {
+		String[] actions = {getString(R.string.folder_rename), getString(R.string.folder_delete)};
 		new AlertDialog.Builder(requireActivity())
-				.setTitle(R.string.action_context_folder)
-				.setSingleChoiceItems(actions.toArray(new String[0]), checked, (dialog, which) -> {
-					dialog.dismiss();
+				.setTitle(folder)
+				.setItems(actions, (dialog, which) -> {
 					if (which == 0) {
-						alertNewFolder(item);
-					} else if (which == 1) {
-						appRepository.setFolder(item, null);
+						alertInput(R.string.folder_rename, folder, name -> {
+							appRepository.renameFolder(folder, name);
+							if (folder.equals(preferences.getString(PREF_APP_FOLDER, null))) {
+								setFolderFilter(name);
+							}
+						});
 					} else {
-						appRepository.setFolder(item, actions.get(which));
+						alertDeleteFolder(folder);
 					}
 				})
 				.setNegativeButton(android.R.string.cancel, null)
 				.show();
 	}
 
-	private void alertNewFolder(AppItem item) {
-		alertInput(R.string.folder_new, "", name -> appRepository.setFolder(item, name));
+	private void alertDeleteFolder(String folder) {
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(R.string.folder_delete)
+				.setMessage(getString(R.string.folder_delete_message, folder))
+				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+					appRepository.clearFolder(folder);
+					if (folder.equals(preferences.getString(PREF_APP_FOLDER, null))) {
+						setFolderFilter(null);
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void alertMoveToFolder(AppItem item) {
+		List<AppItem> items = new ArrayList<>(1);
+		items.add(item);
+		alertMoveToFolder(items);
+	}
+
+	private void alertMoveToFolder(List<AppItem> items) {
+		if (items.isEmpty()) {
+			return;
+		}
+		List<String> folders = adapter.getFolders();
+		List<String> actions = new ArrayList<>();
+		actions.add(getString(R.string.folder_new));
+		actions.add(getString(R.string.folder_none));
+		actions.addAll(folders);
+		String current = items.size() == 1 ? items.get(0).getFolder() : null;
+		int checked = current == null ? 1 : actions.indexOf(current);
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(R.string.action_context_folder)
+				.setSingleChoiceItems(actions.toArray(new String[0]), checked, (dialog, which) -> {
+					dialog.dismiss();
+					if (which == 0) {
+						alertInput(R.string.folder_new, "", name -> moveItemsToFolder(items, name));
+					} else if (which == 1) {
+						moveItemsToFolder(items, null);
+					} else {
+						moveItemsToFolder(items, actions.get(which));
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void moveItemsToFolder(List<AppItem> items, String folder) {
+		for (AppItem item : items) {
+			appRepository.setFolder(item, folder);
+		}
+		setSelectionMode(false);
+	}
+
+	private void alertDeleteSelection() {
+		List<AppItem> items = adapter.getSelectedItems();
+		if (items.isEmpty()) {
+			return;
+		}
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(android.R.string.dialog_alert_title)
+				.setMessage(getResources().getQuantityString(R.plurals.message_delete_multiple, items.size(), items.size()))
+				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+					for (AppItem item : items) {
+						AppUtils.deleteApp(item);
+						appRepository.delete(item);
+					}
+					setSelectionMode(false);
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void setSelectionMode(boolean enabled) {
+		if (selectionMode == enabled) {
+			return;
+		}
+		selectionMode = enabled;
+		adapter.setSelectionMode(enabled);
+		backCallback.setEnabled(enabled);
+		requireActivity().supportInvalidateOptionsMenu();
+	}
+
+	private void onSelectionChanged(int count) {
+		if (count == 0 && selectionMode) {
+			setSelectionMode(false);
+		}
 	}
 
 	private void setFolderFilter(String folder) {
@@ -398,6 +504,26 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	}
 
 	@Override
+	public void onPrepareMenu(@NonNull Menu menu) {
+		int[] browseItems = {R.id.action_search, R.id.action_view, R.id.action_sort,
+				R.id.action_folder, R.id.action_select};
+		int[] selectionItems = {R.id.action_select_all, R.id.action_move_selected,
+				R.id.action_delete_selected, R.id.action_cancel_selection};
+		for (int id : browseItems) {
+			MenuItem item = menu.findItem(id);
+			if (item != null) {
+				item.setVisible(!selectionMode);
+			}
+		}
+		for (int id : selectionItems) {
+			MenuItem item = menu.findItem(id);
+			if (item != null) {
+				item.setVisible(selectionMode);
+			}
+		}
+	}
+
+	@Override
 	public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
 		menuInflater.inflate(R.menu.main, menu);
 		final MenuItem searchItem = menu.findItem(R.id.action_search);
@@ -454,6 +580,16 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			activity.finish();
 		} else if (itemId == R.id.action_sort) {
 			showSortDialog();
+		} else if (itemId == R.id.action_select) {
+			setSelectionMode(true);
+		} else if (itemId == R.id.action_select_all) {
+			adapter.selectAll();
+		} else if (itemId == R.id.action_move_selected) {
+			alertMoveToFolder(adapter.getSelectedItems());
+		} else if (itemId == R.id.action_delete_selected) {
+			alertDeleteSelection();
+		} else if (itemId == R.id.action_cancel_selection) {
+			setSelectionMode(false);
 		} else if (itemId == R.id.action_folder) {
 			showFolderDialog();
 		} else if (itemId == R.id.action_view) {
