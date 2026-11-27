@@ -115,6 +115,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private FragmentAppsListBinding binding;
 	private DividerItemDecoration itemDecoration;
 	private boolean selectionMode;
+	private CharSequence searchQuery = "";
 	private final OnBackPressedCallback backCallback = new OnBackPressedCallback(false) {
 		@Override
 		public void handleOnBackPressed() {
@@ -373,6 +374,13 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		selectionMode = enabled;
 		adapter.setSelectionMode(enabled);
 		backCallback.setEnabled(enabled);
+		if (binding != null) {
+			if (enabled) {
+				binding.floatingActionButton.hide();
+			} else {
+				binding.floatingActionButton.show();
+			}
+		}
 		requireActivity().supportInvalidateOptionsMenu();
 	}
 
@@ -528,6 +536,9 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		menuInflater.inflate(R.menu.main, menu);
 		final MenuItem searchItem = menu.findItem(R.id.action_search);
 		SearchView searchView = (SearchView) searchItem.getActionView();
+		if (searchViewDisposable != null) {
+			searchViewDisposable.dispose();
+		}
 		searchViewDisposable = Observable.create((ObservableOnSubscribe<String>) emitter ->
 						searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 							@Override
@@ -545,7 +556,14 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 				.map(String::toLowerCase)
 				.distinctUntilChanged()
 				.observeOn(AndroidSchedulers.mainThread())
-				.subscribe(charSequence -> adapter.getFilter().filter(charSequence));
+				.subscribe(query -> {
+					searchQuery = query;
+					adapter.getFilter().filter(query);
+				});
+		if (!selectionMode && searchQuery != null && searchQuery.length() > 0) {
+			searchItem.expandActionView();
+			searchView.setQuery(searchQuery, false);
+		}
 		int type = preferences.getInt(PREF_APPS_VIEW, AppsListAdapter.LAYOUT_TYPE_GRID);
 		if (type == AppsListAdapter.LAYOUT_TYPE_LIST) {
 			menu.findItem(R.id.action_view).setIcon(R.drawable.ic_action_apps_view_grid);
