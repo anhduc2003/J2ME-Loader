@@ -79,8 +79,9 @@ jobs:
           tag: continuous
           commit: ${{ github.sha }}
           name: Automated CI builds
-          body: Automated builds from the latest commits on master.
-          prerelease: true
+          body: Automated builds from the latest commits on master. The APK is attached under Assets. Without repository signing secrets it is signed with the Android debug key.
+          prerelease: false
+          makeLatest: true
           allowUpdates: true
           removeArtifacts: true
           artifactErrorsFailBuild: true
