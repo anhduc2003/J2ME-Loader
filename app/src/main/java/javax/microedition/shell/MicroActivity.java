@@ -22,6 +22,7 @@ package javax.microedition.shell;
 import static ru.playsoftware.j2meloader.util.Constants.*;
 
 import android.annotation.SuppressLint;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
@@ -38,6 +39,8 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.text.method.DigitsKeyListener;
+import android.util.Log;
+import android.util.Rational;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.KeyEvent;
@@ -119,6 +122,7 @@ public class MicroActivity extends AppCompatActivity {
 	private int toolbarHeight;
 	private int menuKey;
 	private String appPath;
+	private boolean floatWindows;
 
 	public ActivityMicroBinding binding;
 
@@ -144,6 +148,7 @@ public class MicroActivity extends AppCompatActivity {
 		setSupportActionBar(binding.toolbar);
 		applyMaxRefreshRate();
 
+		floatWindows = sp.getBoolean(PREF_FLOAT_WINDOWS, true);
 		actionBarEnabled = sp.getBoolean(PREF_TOOLBAR, false);
 		statusBarEnabled = sp.getBoolean(PREF_STATUSBAR, false);
 		cutoutsEnabled = sp.getBoolean(PREF_ADD_CUTOUT_AREA, false) &&
@@ -219,6 +224,9 @@ public class MicroActivity extends AppCompatActivity {
 			e.printStackTrace();
 			showErrorDialog(e.toString());
 		}
+		if (savedInstanceState == null && floatWindows) {
+			binding.getRoot().postDelayed(this::enterFloatingWindow, 300);
+		}
 	}
 
 	private void applyMaxRefreshRate() {
@@ -268,7 +276,7 @@ public class MicroActivity extends AppCompatActivity {
 	@Override
 	public void onPause() {
 		hideSoftInput();
-		if (!pauseSuppressed && !pauseDisabled) {
+		if (!pauseSuppressed && !pauseDisabled && !isInPictureInPictureMode()) {
 			visible = false;
 			MidletThread.pauseApp();
 		}
@@ -542,6 +550,9 @@ public class MicroActivity extends AppCompatActivity {
 		if (inputMethodManager == null) {
 			menu.findItem(R.id.action_ime_keyboard).setVisible(false);
 		}
+		if (!supportsFloatingWindows()) {
+			menu.findItem(R.id.action_float_window).setVisible(false);
+		}
 		if (ContextHolder.getVk() == null) {
 			menu.findItem(R.id.action_submenu_vk).setVisible(false);
 			menu.findItem(R.id.action_hide_vk).setVisible(false);
@@ -574,6 +585,8 @@ public class MicroActivity extends AppCompatActivity {
 			saveLog();
 		} else if (id == R.id.action_new_window) {
 			openInNewWindow();
+		} else if (id == R.id.action_float_window) {
+			enterFloatingWindow();
 		} else if (id == R.id.action_lock_orientation) {
 			if (item.isChecked()) {
 				VirtualKeyboard vk = ContextHolder.getVk();
@@ -603,6 +616,57 @@ public class MicroActivity extends AppCompatActivity {
 			handleVkOptions(id);
 		}
 		return true;
+	}
+
+	@Override
+	public void onPictureInPictureModeChanged(boolean inPictureInPictureMode,
+											  @NonNull Configuration newConfig) {
+		super.onPictureInPictureModeChanged(inPictureInPictureMode, newConfig);
+		if (!inPictureInPictureMode) {
+			visible = true;
+			if (!pauseSuppressed) {
+				MidletThread.resumeApp();
+			}
+		}
+	}
+
+	private boolean supportsFloatingWindows() {
+		return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+				&& getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE);
+	}
+
+	private void enterFloatingWindow() {
+		if (!supportsFloatingWindows() || isFinishing() || isInPictureInPictureMode()) {
+			if (!supportsFloatingWindows()) {
+				Toast.makeText(this, R.string.float_window_unavailable, Toast.LENGTH_SHORT).show();
+			}
+			return;
+		}
+		try {
+			PictureInPictureParams params = new PictureInPictureParams.Builder()
+					.setAspectRatio(floatingAspectRatio())
+					.build();
+			enterPictureInPictureMode(params);
+		} catch (RuntimeException e) {
+			Log.w("MicroActivity", "Can't enter picture-in-picture mode", e);
+		}
+	}
+
+	private Rational floatingAspectRatio() {
+		View view = binding.displayableContainer;
+		int width = view.getWidth();
+		int height = view.getHeight();
+		if (width <= 0 || height <= 0) {
+			return new Rational(9, 16);
+		}
+		double ratio = (double) width / height;
+		if (ratio < 0.45) {
+			return new Rational(45, 100);
+		}
+		if (ratio > 2.3) {
+			return new Rational(23, 10);
+		}
+		return new Rational(width, height);
 	}
 
 	private void openInNewWindow() {
