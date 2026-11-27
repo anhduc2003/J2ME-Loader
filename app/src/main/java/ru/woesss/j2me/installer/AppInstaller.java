@@ -344,6 +344,9 @@ public class AppInstaller {
 				FileUtils.deleteDirectory(appDir);
 			}
 		}
+		if (app.getLastPlayed() == 0) {
+			app.setLastPlayed(System.currentTimeMillis());
+		}
 		currentApp = app;
 		appRepository.insert(app);
 		clearCache();
