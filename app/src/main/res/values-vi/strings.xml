@@ -24,6 +24,12 @@
     <string name="action_settings">Thiết lập</string>
     <string name="action_context_delete">Xóa</string>
     <string name="action_context_rename">Đổi tên</string>
+    <string name="action_context_folder">Chuyển vào thư mục</string>
+    <string name="action_folder">Thư mục</string>
+    <string name="folder_all">Tất cả game</string>
+    <string name="folder_none">Không có thư mục</string>
+    <string name="folder_new">Thư mục mới…</string>
+    <string name="msg_folder_empty">Không có game trong thư mục này</string>
     <string name="retry">thử lại</string>
     <string name="err_missing_app">Không tìm thấy ứng dụng.\nVui lòng kiểm tra thiết bị lưu trữ %ssẵn sàng hoặc tạo lại lối tắt.</string>
     <string name="error_disk_io">Lỗi lưu trữ: kiểm tra không gian đĩa</string>
@@ -181,7 +187,8 @@
     <string name="pref_app_sort_title">Sắp xếp thứ tự ứng dụng</string>
     <string name="pref_app_sort_name">Tên</string>
     <string name="pref_app_sort_date">Ngày tháng</string>
-    <string name="pref_app_sort_vendor">Vendor</string>
+    <string name="pref_app_sort_vendor">Nhà phát hành</string>
+    <string name="pref_app_sort_recent">Vừa chơi</string>
     <string name="pref_map_keys">Phím ánh xạ</string>
     <string name="pref_encoding_title">Mã hóa</string>
     <string name="pref_default_settings">Thiết lập mặc định</string>

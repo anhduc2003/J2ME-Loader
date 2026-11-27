@@ -34,24 +34,31 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeSet;
 
 import ru.playsoftware.j2meloader.R;
-import ru.playsoftware.j2meloader.config.Config;
 import ru.playsoftware.j2meloader.databinding.ListRowGridJarBinding;
 import ru.playsoftware.j2meloader.databinding.ListRowJarBinding;
+import ru.playsoftware.j2meloader.util.LibraryFilter;
 
 class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder> implements Filterable {
 	static final int LAYOUT_TYPE_LIST = 0;
 	static final int LAYOUT_TYPE_GRID = 1;
 
+	interface OnAppClickListener {
+		void onAppClick(AppItem item);
+	}
+
 	private final View.OnCreateContextMenuListener contextMenuListener;
+	private final OnAppClickListener appClickListener;
 	private List<AppItem> list = new ArrayList<>();
 	private final AppFilter appFilter = new AppFilter();
 	private CharSequence filterConstraint;
+	private String folderConstraint;
 	private View emptyView;
 	private int layout = LAYOUT_TYPE_LIST;
 
-	AppsListAdapter(View.OnCreateContextMenuListener contextMenuListener) {
+	AppsListAdapter(View.OnCreateContextMenuListener contextMenuListener, OnAppClickListener appClickListener) {
 		super(new DiffUtil.ItemCallback<AppItem>() {
 			@Override
 			public boolean areItemsTheSame(@NonNull AppItem oldItem, @NonNull AppItem newItem) {
@@ -61,10 +68,13 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			@Override
 			public boolean areContentsTheSame(@NonNull AppItem oldItem, @NonNull AppItem newItem) {
 				return oldItem.getTitle().equals(newItem.getTitle()) &&
-						oldItem.getVersion().equals(newItem.getVersion());
+						oldItem.getVersion().equals(newItem.getVersion()) &&
+						oldItem.getLastPlayed() == newItem.getLastPlayed() &&
+						java.util.Objects.equals(oldItem.getFolder(), newItem.getFolder());
 			}
 		});
 		this.contextMenuListener = contextMenuListener;
+		this.appClickListener = appClickListener;
 	}
 
 	@Override
@@ -93,6 +103,25 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 	void setItems(List<AppItem> items) {
 		list = items;
 		appFilter.filter(filterConstraint);
+	}
+
+	void setFolderFilter(String folder) {
+		if (java.util.Objects.equals(folder, folderConstraint)) {
+			return;
+		}
+		folderConstraint = folder;
+		appFilter.filter(filterConstraint);
+	}
+
+	List<String> getFolders() {
+		TreeSet<String> folders = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+		for (AppItem item : list) {
+			String folder = item.getFolder();
+			if (folder != null && !folder.trim().isEmpty()) {
+				folders.add(folder);
+			}
+		}
+		return new ArrayList<>(folders);
 	}
 
 	@Override
@@ -128,7 +157,7 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 				AppsListAdapter adapter = (AppsListAdapter) getBindingAdapter();
 				if (adapter != null) {
 					AppItem item = adapter.getItem(getLayoutPosition());
-					Config.startApp(v.getContext(), item.getTitle(), item.getPathExt(), false);
+					adapter.appClickListener.onAppClick(item);
 				}
 			});
 			itemView.setOnCreateContextMenuListener(contextMenuListener);
@@ -170,14 +199,14 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 		@Override
 		protected FilterResults performFiltering(CharSequence constraint) {
 			FilterResults results = new FilterResults();
-			if (isEmpty(constraint)) {
+			String folder = folderConstraint;
+			if (isEmpty(constraint) && folder == null) {
 				results.count = list.size();
 				results.values = list;
 			} else {
 				ArrayList<AppItem> resultList = new ArrayList<>();
 				for (AppItem item : list) {
-					if (item.getTitle().toLowerCase().contains(constraint) ||
-							item.getAuthor().toLowerCase().contains(constraint)) {
+					if (LibraryFilter.matches(item, constraint, folder)) {
 						resultList.add(item);
 					}
 				}
@@ -199,12 +228,18 @@ class AppsListAdapter extends ListAdapter<AppItem, AppsListAdapter.AppViewHolder
 			if (results.count > 0) {
 				emptyView.setVisibility(View.GONE);
 			} else {
+				int message;
 				if (list.isEmpty()) {
-					((TextView) emptyView).setText(R.string.no_data_for_display);
+					message = R.string.no_data_for_display;
+				} else if (isEmpty(constraint)) {
+					message = R.string.msg_folder_empty;
 				} else {
-					String msg = emptyView.getResources().getString(R.string.msg_no_matches, constraint);
-					((TextView) emptyView).setText(msg);
+					message = R.string.msg_no_matches;
 				}
+				String msg = message == R.string.msg_no_matches
+						? emptyView.getResources().getString(message, constraint)
+						: emptyView.getResources().getString(message);
+				((TextView) emptyView).setText(msg);
 				emptyView.setVisibility(View.VISIBLE);
 			}
 		}

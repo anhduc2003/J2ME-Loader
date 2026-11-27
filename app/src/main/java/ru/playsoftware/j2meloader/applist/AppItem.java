@@ -34,6 +34,8 @@ public class AppItem {
 	private final String author;
 	private final String version;
 	private final String path;
+	private long lastPlayed;
+	private String folder;
 
 	public AppItem(String path, String title, String author, String version) {
 		this.path = path;
@@ -80,6 +82,22 @@ public class AppItem {
 
 	public String getPathExt() {
 		return Config.getAppDir() + path;
+	}
+
+	public long getLastPlayed() {
+		return lastPlayed;
+	}
+
+	public void setLastPlayed(long lastPlayed) {
+		this.lastPlayed = lastPlayed;
+	}
+
+	public String getFolder() {
+		return folder;
+	}
+
+	public void setFolder(String folder) {
+		this.folder = folder;
 	}
 
 	public void setImagePathExt(String imagePath) {

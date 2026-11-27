@@ -22,6 +22,7 @@ import static ru.playsoftware.j2meloader.util.Constants.KEY_APP_URI;
 import static ru.playsoftware.j2meloader.util.Constants.KEY_MIDLET_NAME;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APPS_VIEW;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_SORT;
+import static ru.playsoftware.j2meloader.util.Constants.PREF_APP_FOLDER;
 import static ru.playsoftware.j2meloader.util.Constants.PREF_LAST_PATH;
 
 import android.annotation.SuppressLint;
@@ -75,6 +76,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -103,7 +105,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private final ActivityResultLauncher<String> openFileLauncher = registerForActivityResult(
 			FileUtils.getFilePicker(),
 			this::onPickFileResult);
-	private final AppsListAdapter adapter = new AppsListAdapter(this);
+	private final AppsListAdapter adapter = new AppsListAdapter(this, this::launchApp);
 	private Uri appUri;
 	private SharedPreferences preferences;
 	private AppRepository appRepository;
@@ -111,6 +113,10 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	private GridLayoutManager layoutManager;
 	private FragmentAppsListBinding binding;
 	private DividerItemDecoration itemDecoration;
+
+	private interface InputCallback {
+		void onConfirm(String text);
+	}
 
 	public static AppsListFragment newInstance(Uri data) {
 		AppsListFragment fragment = new AppsListFragment();
@@ -165,6 +171,7 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		});
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
+		adapter.setFolderFilter(preferences.getString(PREF_APP_FOLDER, null));
 		binding.floatingActionButton.setOnClickListener(v -> {
 			String path = preferences.getString(PREF_LAST_PATH, null);
 			if (path == null) {
@@ -211,9 +218,73 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 	}
 
 	private void alertRename(AppItem item) {
+		alertInput(R.string.action_context_rename, item.getTitle(), title -> {
+			item.setTitle(title);
+			appRepository.update(item);
+		});
+	}
+
+	private void launchApp(AppItem item) {
+		if (appRepository != null) {
+			appRepository.markLaunched(item);
+		}
+		Config.startApp(requireActivity(), item.getTitle(), item.getPathExt(), false);
+	}
+
+	private void showFolderDialog() {
+		List<String> folders = adapter.getFolders();
+		String current = preferences.getString(PREF_APP_FOLDER, null);
+		List<String> names = new ArrayList<>();
+		names.add(getString(R.string.folder_all));
+		names.addAll(folders);
+		int checked = current == null ? 0 : Math.max(names.indexOf(current), 0);
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(R.string.action_folder)
+				.setSingleChoiceItems(names.toArray(new String[0]), checked, (dialog, which) -> {
+					setFolderFilter(which == 0 ? null : names.get(which));
+					dialog.dismiss();
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void alertMoveToFolder(AppItem item) {
+		List<String> folders = adapter.getFolders();
+		List<String> actions = new ArrayList<>();
+		actions.add(getString(R.string.folder_new));
+		actions.add(getString(R.string.folder_none));
+		actions.addAll(folders);
+		String current = item.getFolder();
+		int checked = current == null ? 1 : actions.indexOf(current);
+		new AlertDialog.Builder(requireActivity())
+				.setTitle(R.string.action_context_folder)
+				.setSingleChoiceItems(actions.toArray(new String[0]), checked, (dialog, which) -> {
+					dialog.dismiss();
+					if (which == 0) {
+						alertNewFolder(item);
+					} else if (which == 1) {
+						appRepository.setFolder(item, null);
+					} else {
+						appRepository.setFolder(item, actions.get(which));
+					}
+				})
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
+	}
+
+	private void alertNewFolder(AppItem item) {
+		alertInput(R.string.folder_new, "", name -> appRepository.setFolder(item, name));
+	}
+
+	private void setFolderFilter(String folder) {
+		preferences.edit().putString(PREF_APP_FOLDER, folder).apply();
+		adapter.setFolderFilter(folder);
+	}
+
+	private void alertInput(int titleRes, CharSequence initial, InputCallback onConfirm) {
 		FragmentActivity activity = requireActivity();
 		EditText editText = new EditText(activity);
-		editText.setText(item.getTitle());
+		editText.setText(initial);
 		float density = getResources().getDisplayMetrics().density;
 		LinearLayout linearLayout = new LinearLayout(activity);
 		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -224,20 +295,19 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 		int paddingVertical = (int) (density * 16);
 		int paddingHorizontal = (int) (density * 8);
 		editText.setPadding(paddingHorizontal, paddingVertical, paddingHorizontal, paddingVertical);
-		AlertDialog.Builder builder = new AlertDialog.Builder(activity)
-				.setTitle(R.string.action_context_rename)
+		new AlertDialog.Builder(activity)
+				.setTitle(titleRes)
 				.setView(linearLayout)
-				.setPositiveButton(android.R.string.ok, (dialogInterface, i) -> {
-					String title = editText.getText().toString().trim();
-					if (title.equals("")) {
-						Toast.makeText(getActivity(), R.string.error, Toast.LENGTH_SHORT).show();
+				.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+					String text = editText.getText().toString().trim();
+					if (text.isEmpty()) {
+						Toast.makeText(activity, R.string.error, Toast.LENGTH_SHORT).show();
 					} else {
-						item.setTitle(title);
-						appRepository.update(item);
+						onConfirm.onConfirm(text);
 					}
 				})
-				.setNegativeButton(android.R.string.cancel, null);
-		builder.show();
+				.setNegativeButton(android.R.string.cancel, null)
+				.show();
 	}
 
 	private void alertDelete(AppItem item) {
@@ -275,6 +345,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			requestAddShortcut(appItem);
 		} else if (itemId == R.id.action_context_rename) {
 			alertRename(appItem);
+		} else if (itemId == R.id.action_context_folder) {
+			alertMoveToFolder(appItem);
 		} else if (itemId == R.id.action_context_settings) {
 			Config.startApp(requireActivity(), appItem.getTitle(), appItem.getPathExt(), true);
 		} else if (itemId == R.id.action_context_reinstall) {
@@ -382,6 +454,8 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 			activity.finish();
 		} else if (itemId == R.id.action_sort) {
 			showSortDialog();
+		} else if (itemId == R.id.action_folder) {
+			showFolderDialog();
 		} else if (itemId == R.id.action_view) {
 			int viewType = adapter.getItemViewType(0);
 			viewType = (viewType + 1) % 2;
@@ -431,6 +505,10 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 
 	private void onDbUpdated(List<AppItem> items) {
 		adapter.setItems(items);
+		String folder = preferences.getString(PREF_APP_FOLDER, null);
+		if (folder != null && !adapter.getFolders().contains(folder)) {
+			setFolderFilter(null);
+		}
 		if (appUri != null) {
 			InstallerDialog.newInstance(appUri).show(getParentFragmentManager(), "installer");
 			appUri = null;
