@@ -180,7 +180,6 @@ public class AppsListFragment extends Fragment implements MenuProvider {
 				layoutManager.setSpanCount(configuration.screenWidthDp / 90);
 			}
 		});
-		binding.list.setHasFixedSize(true);
 		binding.list.setItemViewCacheSize(24);
 		binding.list.setLayoutManager(layoutManager);
 		binding.list.setAdapter(adapter);
